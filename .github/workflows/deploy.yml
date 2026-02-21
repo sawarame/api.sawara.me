@@ -1,0 +1,30 @@
+name: Deploy SAM Application
+
+on:
+  push:
+    branches:
+      - main  # masterを使っている場合はここをmasterに変更してください
+
+jobs:
+  deploy:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      
+      # SAM CLIのセットアップ
+      - uses: aws-actions/setup-sam@v2
+      
+      # AWS認証情報のセットアップ（GitHub Secretsから読み込む）
+      - uses: aws-actions/configure-aws-credentials@v4
+        with:
+          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+          aws-secret-access-key: ${{ secrets.AWS_SECRET_ACCESS_KEY }}
+          aws-region: ap-northeast-1  # 東京リージョン
+
+      # ビルド
+      - run: sam build
+
+      # デプロイ
+      # --no-confirm-changeset: 確認なしで実行
+      # --no-fail-on-empty-changeset: 変更がない場合もエラーにしない
+      - run: sam deploy --no-confirm-changeset --no-fail-on-empty-changeset
