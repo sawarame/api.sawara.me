@@ -3,7 +3,7 @@ name: Deploy SAM Application
 on:
   push:
     branches:
-      - main  # masterを使っている場合はここをmasterに変更してください
+      - master
 
 jobs:
   deploy:
