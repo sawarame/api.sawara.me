@@ -4,12 +4,21 @@ def lambda_handler(event, context):
     """
     API Gateway (HTTP API) から渡されるイベントからIPアドレスを抽出して返す
     """
-    
+
     # 1. イベントオブジェクトからクライアントのIPアドレスを取得
-    # HTTP API (v2) の場合、このパスにIPが含まれます
-    try:
-        ip_address = event['requestContext']['http']['sourceIp']
-    except (KeyError, TypeError):
+    # 1-1. REST API (v1) の構造から探す（今回のJSONのパターン）
+    ip_address = event.get('requestContext', {}).get('identity', {}).get('sourceIp')
+    
+    # 1-2. もし空なら、HTTP API (v2) の構造から探す
+    if not ip_address:
+        ip_address = event.get('requestContext', {}).get('http', {}).get('sourceIp')
+        
+    # 1-3. それでもダメならヘッダーから探す（プロキシ経由など）
+    if not ip_address:
+        ip_address = event.get('headers', {}).get('X-Forwarded-For', '').split(',')[0]
+
+    # 1-4. それでも見つからない場合は "unknown" とする
+    if not ip_address:
         ip_address = "unknown"
 
     # 2. レスポンスの作成
