@@ -14,6 +14,26 @@ Globals:
     LoggingConfig:
       LogFormat: JSON
 Resources:
+  ApiSawarame:
+    Type: AWS::Serverless::Api
+    Properties:
+      StageName: Prod
+      # ここでリソースポリシーを定義します
+      Auth:
+        ResourcePolicy:
+          CustomStatements:
+            - Effect: Deny
+              Principal: "*"
+              Action: "execute-api:Invoke"
+              Resource: "execute-api:/*"
+              Condition:
+                StringNotLike:
+                  "aws:Referer":
+                    - "https://sawara.me/*"
+            - Effect: Allow
+              Principal: "*"
+              Action: "execute-api:Invoke"
+              Resource: "execute-api:/*"
   V1GetIpaddressFunction:
     Type: AWS::Serverless::Function # More info about Function Resource: https://github.com/awslabs/serverless-application-model/blob/master/versions/2016-10-31.md#awsserverlessfunction
     Properties:
@@ -28,6 +48,7 @@ Resources:
           Properties:
             Path: /v1/ipaddress
             Method: get
+            RestApiId: !Ref ApiSawarame
 
 Outputs:
   # ServerlessRestApi is an implicit API created out of Events key under Serverless::Function
@@ -35,7 +56,7 @@ Outputs:
   # https://github.com/awslabs/serverless-application-model/blob/master/docs/internals/generated_resources.rst#api
   V1GetIpaddressApi:
     Description: API Gateway endpoint URL for Prod stage for get ip address function
-    Value: !Sub "https://${ServerlessRestApi}.execute-api.${AWS::Region}.${AWS::URLSuffix}/Prod/v1/ipaddress/"
+    Value: !Sub "https://${ApiSawarame}.execute-api.${AWS::Region}.${AWS::URLSuffix}/Prod/v1/ipaddress/"
   V1GetIpaddressFunction:
     Description: get ip address Lambda Function ARN
     Value: !GetAtt V1GetIpaddressFunction.Arn
